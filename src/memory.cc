@@ -97,7 +97,11 @@ void* operator new(size_t size) BADALLOC
 		}
 		else
 		{
+#ifndef __CHERI_PURE_CAPABILITY__
 			throw std::bad_alloc();
+#else
+			abort(); // TODO: return NULL instead?
+#endif
 		}
 		mem = malloc(size);
 	}
@@ -108,6 +112,7 @@ void* operator new(size_t size) BADALLOC
 __attribute__((weak))
 void* operator new(size_t size, const std::nothrow_t &) NOEXCEPT
 {
+#ifndef __CHERI_PURE_CAPABILITY__
 	try {
 		return :: operator new(size);
 	} catch (...) {
@@ -115,6 +120,9 @@ void* operator new(size_t size, const std::nothrow_t &) NOEXCEPT
 		// std::bad_alloc exception in new handler
 		return NULL;
 	}
+#else
+	return ::operator new(size);
+#endif
 }
 
 
@@ -135,6 +143,7 @@ void * operator new[](size_t size) BADALLOC
 __attribute__((weak))
 void * operator new[](size_t size, const std::nothrow_t &) NOEXCEPT
 {
+#ifndef __CHERI_PURE_CAPABILITY__
 	try {
 		return ::operator new[](size);
 	} catch (...) {
@@ -142,6 +151,9 @@ void * operator new[](size_t size, const std::nothrow_t &) NOEXCEPT
 		// std::bad_alloc exception in new handler
 		return NULL;
 	}
+#else
+	return ::operator new(size);
+#endif
 }
 
 

@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
+option(CHERI_PURE "Build for CHERI Sandbox ABI (disables exceptions and RTTI)" OFF)
+
 enable_testing()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")

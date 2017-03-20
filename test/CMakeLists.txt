@@ -1,10 +1,11 @@
 
 set(CXXTEST_SOURCES
     test.cc
-    test_exception.cc
     test_guard.cc
-    test_typeinfo.cc
    )
+if(NOT CHERI_PURE)
+  list(APPEND CXXTEST_SOURCES test_exception.cc test_typeinfo.cc)
+endif()
 
 
 add_executable(system-test ${CXXTEST_SOURCES})
