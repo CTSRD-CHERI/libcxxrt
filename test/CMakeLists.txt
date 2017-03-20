@@ -3,7 +3,7 @@ set(CXXTEST_SOURCES
     test.cc
     test_guard.cc
    )
-if(NOT CHERI_PURE)
+if(ENABLE_EXCEPTIONS_RTTI)
   list(APPEND CXXTEST_SOURCES test_exception.cc test_typeinfo.cc)
 endif()
 

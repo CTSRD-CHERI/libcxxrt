@@ -32,15 +32,12 @@ static void __attribute__((constructor)) init(void)
 	atexit(log_totals);
 }
 
+#ifndef LIBCXXRT_NO_EXCEPTIONS_NO_RTTI
 void test_type_info(void);
 void test_exceptions();
+#endif
 void test_guards(void);
 
-#ifdef __CHERI_PURE_CAPABILITY
-// Not tested for sandbox ABI yet
-void test_type_info(void) {}
-void test_guards(void) {}
-#endif
 int main(int argc, char **argv)
 {
 	int ch;
@@ -55,8 +52,12 @@ int main(int argc, char **argv)
 		}
 	}
 
+#ifndef LIBCXXRT_NO_EXCEPTIONS_NO_RTTI
 	test_type_info();
+#endif
 	test_guards();
+#ifndef LIBCXXRT_NO_EXCEPTIONS_NO_RTTI
 	test_exceptions();
+#endif
 	return 0;
 }

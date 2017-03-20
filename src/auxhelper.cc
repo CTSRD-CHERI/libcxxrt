@@ -32,7 +32,7 @@
  */
 
 #include <stdlib.h>
-#ifndef __CHERI_PURE_CAPABILITY__
+#ifndef LIBCXXRT_NO_EXCEPTIONS_NO_RTTI
 #include "stdexcept.h"
 
 /**
@@ -54,7 +54,7 @@ extern "C" void __cxa_bad_typeid()
 {
     throw std::bad_typeid();
 }
-#endif
+#endif // LIBCXXRT_NO_EXCEPTIONS_NO_RTTI
 
 /**
  * Compilers may (but are not required to) set any pure-virtual function's
@@ -80,18 +80,18 @@ extern "C" void __cxa_deleted_virtual()
 
 extern "C" void __cxa_throw_bad_array_new_length()
 {
-#ifndef __CHERI_PURE_CAPABILITY__
+#ifndef LIBCXXRT_NO_EXCEPTIONS_NO_RTTI
     throw std::bad_array_new_length();
 #else
     abort();
-#endif
+#endif // LIBCXXRT_NO_EXCEPTIONS_NO_RTTI
 }
 
 extern "C" void __cxa_throw_bad_alloc()
 {
-#ifndef __CHERI_PURE_CAPABILITY__
+#ifndef LIBCXXRT_NO_EXCEPTIONS_NO_RTTI
     throw std::bad_alloc();
 #else
     abort();
-#endif
+#endif // LIBCXXRT_NO_EXCEPTIONS_NO_RTTI
 }
