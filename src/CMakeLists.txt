@@ -6,16 +6,19 @@ set(CXXRT_SOURCES
     stdexcept.cc
     libelftc_dem_gnu3.c
    )
-  list(APPEND CXXRT_SOURCES unwind_stubs_cheri_pure.c)
 
-if (ENABLE_EXCEPTIONS_RTTI)
+if (NO_UNWIND_LIBRARY)
+  list(APPEND CXXRT_SOURCES unwind_stubs.c)
+endif()
+
+if (DISABLE_EXCEPTIONS_RTTI)
+  list(APPEND CXXRT_SOURCES exception_stubs.cc)
+else()
   list(APPEND CXXRT_SOURCES
        exception.cc
        typeinfo.cc
        dynamic_cast.cc
    )
-else()
-  list(APPEND CXXRT_SOURCES exception_stubs.cc)
 endif()
 
 add_library(cxxrt-static STATIC ${CXXRT_SOURCES})
