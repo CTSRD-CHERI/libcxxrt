@@ -10,6 +10,9 @@ set(CXXRT_SOURCES
     libelftc_dem_gnu3.c
    )
 
+if (CHERI_PURE)
+  list(APPEND CXXRT_SOURCES unwind_stubs_cheri_pure.c)
+endif()
 
 add_library(cxxrt-static STATIC ${CXXRT_SOURCES})
 add_library(cxxrt-shared SHARED ${CXXRT_SOURCES})
