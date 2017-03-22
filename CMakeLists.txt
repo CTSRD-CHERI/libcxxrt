@@ -5,8 +5,8 @@ option(DISABLE_EXCEPTIONS_RTTI "Disable exceptions and RTTI" OFF)
 option(NO_UNWIND_LIBRARY "Use libcxxrt without an unwind library" OFF)
 
 if (CHERI_PURE)
-  set(DISABLE_EXCEPTIONS_RTTI ON)
-  set(NO_UNWIND_LIBRARY ON)
+  set(DISABLE_EXCEPTIONS_RTTI ON CACHE BOOL "Disable exceptions and RTTI" FORCE)
+  set(NO_UNWIND_LIBRARY ON CACHE BOOL "Use libcxxrt without an unwind library" FORCE)
 endif()
 
 if (DISABLE_EXCEPTIONS_RTTI)
