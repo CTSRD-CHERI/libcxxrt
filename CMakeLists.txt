@@ -3,10 +3,12 @@ cmake_minimum_required(VERSION 3.0)
 option(CHERI_PURE "Build for CHERI Sandbox ABI (disables exceptions and RTTI)" OFF)
 option(DISABLE_EXCEPTIONS_RTTI "Disable exceptions and RTTI" OFF)
 option(NO_UNWIND_LIBRARY "Use libcxxrt without an unwind library" OFF)
+option(NO_SHARED "Do not build shared objects" OFF)
 
 if (CHERI_PURE)
   set(DISABLE_EXCEPTIONS_RTTI ON CACHE BOOL "Disable exceptions and RTTI" FORCE)
   set(NO_UNWIND_LIBRARY ON CACHE BOOL "Use libcxxrt without an unwind library" FORCE)
+  set(NO_SHARED ON CACHE BOOL "Do not build shared objects" FORCE)
 endif()
 
 if (DISABLE_EXCEPTIONS_RTTI)

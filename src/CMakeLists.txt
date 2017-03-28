@@ -8,33 +8,28 @@ set(CXXRT_SOURCES
    )
 
 if (NO_UNWIND_LIBRARY)
-  list(APPEND CXXRT_SOURCES unwind_stubs.c)
+    list(APPEND CXXRT_SOURCES unwind_stubs.c)
 endif()
 
 if (DISABLE_EXCEPTIONS_RTTI)
-  list(APPEND CXXRT_SOURCES exception_stubs.cc)
+    list(APPEND CXXRT_SOURCES exception_stubs.cc)
 else()
-  list(APPEND CXXRT_SOURCES
-       exception.cc
-       typeinfo.cc
-       dynamic_cast.cc
-   )
+    list(APPEND CXXRT_SOURCES
+         exception.cc
+         typeinfo.cc
+         dynamic_cast.cc
+     )
 endif()
 
 add_library(cxxrt-static STATIC ${CXXRT_SOURCES})
-add_library(cxxrt-shared SHARED ${CXXRT_SOURCES})
-target_link_libraries(cxxrt-shared ${CMAKE_DL_LIBS})
 target_link_libraries(cxxrt-static ${CMAKE_DL_LIBS})
-target_compile_features(cxxrt-shared PRIVATE cxx_static_assert)
 target_compile_features(cxxrt-static PRIVATE cxx_static_assert)
+set_target_properties(cxxrt-static PROPERTIES OUTPUT_NAME "cxxrt")
 
-if (CHERI_PURE)
-  target_link_libraries(cxxrt-shared -nostdlib -lc)
+if (NOT NO_SHARED)
+    add_library(cxxrt-shared SHARED ${CXXRT_SOURCES})
+    target_link_libraries(cxxrt-shared ${CMAKE_DL_LIBS})
+    target_compile_features(cxxrt-shared PRIVATE cxx_static_assert)
+    set_target_properties(cxxrt-shared PROPERTIES OUTPUT_NAME "cxxrt")
 endif()
-
-set_target_properties(cxxrt-static cxxrt-shared PROPERTIES
-                      OUTPUT_NAME "cxxrt"
-                     )
-
-
 
