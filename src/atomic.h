@@ -28,3 +28,11 @@
 	(__sync_synchronize(), *addr)
 #endif
 
+#if __has_builtin(__c11_atomic_compare_exchange_strong)
+#define ATOMIC_CMP_SWAP(addr, exp_addr, val)\
+  __c11_atomic_compare_exchange_strong(reinterpret_cast<_Atomic(__typeof__(*addr))*>(addr), exp_addr, val, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
+#else
+#define ATOMIC_CMP_SWAP(addr, exp_addr, val)\
+  __sync_bool_compare_and_swap(addr, *exp_addr, val)
+#endif
+

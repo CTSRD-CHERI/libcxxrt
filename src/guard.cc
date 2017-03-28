@@ -115,7 +115,7 @@ static const guard_lock_t INITIAL = 0;
  * initialised, and 1 if it has not.  If the object is already constructed then
  * this function just needs to read a byte from memory and return.
  */
-extern "C" int __cxa_guard_acquire(volatile guard_t *guard_object)
+extern "C" int __cxa_guard_acquire(guard_t *guard_object)
 {
 	guard_lock_t old;
 	// Not an atomic read, doesn't establish a happens-before relationship, but
@@ -130,9 +130,10 @@ extern "C" int __cxa_guard_acquire(volatile guard_t *guard_object)
 		// Loop trying to move the value of the guard from 0 (not
 		// locked, not initialised) to the locked-uninitialised
 		// position.
-		old = __sync_val_compare_and_swap(LOCK_PART(guard_object),
-		    INITIAL, LOCKED);
-		if (old == INITIAL) {
+		old = INITIAL;
+    bool acquired = ATOMIC_CMP_SWAP(LOCK_PART(guard_object), &old, LOCKED);
+		if (acquired)
+    {
 			// Lock obtained.  If lock and init bit are
 			// in separate words, check for init race.
 			if (INIT_PART(guard_object) == LOCK_PART(guard_object))
@@ -145,20 +146,25 @@ extern "C" int __cxa_guard_acquire(volatile guard_t *guard_object)
 			*LOCK_PART(guard_object) = INITIAL;
 			return 0;
 		}
-		// If lock and init bit are in the same word, check again
-		// if we are done.
-		if (INIT_PART(guard_object) == LOCK_PART(guard_object) &&
-		    old == INITIALISED)
-			return 0;
+    else
+    {
+      // The atomic compare and swap failed, old contains the current
+      // value of the guard.
+      // If lock and init bit are in the same word, check again
+      // if we are done.
+      if (INIT_PART(guard_object) == LOCK_PART(guard_object) &&
+          old == INITIALISED)
+        return 0;
 
-		assert(old == LOCKED);
-		// Another thread holds the lock.
-		// If lock and init bit are in different words, check
-		// if we are done before yielding and looping.
-		if (INIT_PART(guard_object) != LOCK_PART(guard_object) &&
-		    INITIALISED == *INIT_PART(guard_object))
-			return 0;
-		sched_yield();
+      assert(old == LOCKED);
+      // Another thread holds the lock.
+      // If lock and init bit are in different words, check
+      // if we are done before yielding and looping.
+      if (INIT_PART(guard_object) != LOCK_PART(guard_object) &&
+          INITIALISED == *INIT_PART(guard_object))
+        return 0;
+      sched_yield();
+    }
 	}
 }
 
@@ -166,27 +172,24 @@ extern "C" int __cxa_guard_acquire(volatile guard_t *guard_object)
  * Releases the lock without marking the object as initialised.  This function
  * is called if initialising a static causes an exception to be thrown.
  */
-extern "C" void __cxa_guard_abort(volatile guard_t *guard_object)
+extern "C" void __cxa_guard_abort(guard_t *guard_object)
 {
-	__attribute__((unused))
-	bool reset = __sync_bool_compare_and_swap(LOCK_PART(guard_object),
-	    LOCKED, INITIAL);
+  guard_lock_t old = LOCKED;
+	bool reset = ATOMIC_CMP_SWAP(LOCK_PART(guard_object), &old, INITIAL);
 	assert(reset);
 }
 /**
  * Releases the guard and marks the object as initialised.  This function is
  * called after successful initialisation of a static.
  */
-extern "C" void __cxa_guard_release(volatile guard_t *guard_object)
+extern "C" void __cxa_guard_release(guard_t *guard_object)
 {
 	guard_lock_t old;
 	if (INIT_PART(guard_object) == LOCK_PART(guard_object))
 		old = LOCKED;
 	else
 		old = INITIAL;
-	__attribute__((unused))
-	bool reset = __sync_bool_compare_and_swap(INIT_PART(guard_object),
-	    old, INITIALISED);
+	bool reset = ATOMIC_CMP_SWAP(INIT_PART(guard_object), &old, INITIALISED);
 	assert(reset);
 	if (INIT_PART(guard_object) != LOCK_PART(guard_object))
 		*LOCK_PART(guard_object) = INITIAL;
