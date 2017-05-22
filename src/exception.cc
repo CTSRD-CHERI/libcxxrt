@@ -1179,9 +1179,11 @@ BEGIN_PERSONALITY_FUNCTION(__gxx_personality_v0)
 	}
 
 
-	_Unwind_SetIP(context, reinterpret_cast<unsigned long>(action.landing_pad));
+	//_Unwind_SetIP(context, static_cast<uintptr_t>(action.landing_pad));
+	_Unwind_SetIP(context, (uintptr_t)(action.landing_pad));
 	_Unwind_SetGR(context, __builtin_eh_return_data_regno(0),
-	              reinterpret_cast<unsigned long>(exceptionObject));
+	              (uintptr_t)(exceptionObject));
+	              //static_cast<uintptr_t>(exceptionObject));
 	_Unwind_SetGR(context, __builtin_eh_return_data_regno(1), selector);
 
 	return _URC_INSTALL_CONTEXT;
