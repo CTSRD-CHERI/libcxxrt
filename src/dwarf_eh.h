@@ -35,6 +35,7 @@
 
 // TODO: Factor out Itanium / ARM differences.  We probably want an itanium.h
 // and arm.h that can be included by this file depending on the target ABI.
+#include <stdint.h>
 
 // _GNU_SOURCE must be defined for unwind.h to expose some of the functions
 // that we want.  If it isn't, then we define it and undefine it to make sure
@@ -47,7 +48,6 @@
 #	include "unwind.h"
 #endif
 
-#include <stdint.h>
 
 /// Type used for pointers into DWARF data
 typedef unsigned char *dw_eh_ptr_t;
@@ -140,8 +140,9 @@ static inline int dwarf_size_of_fixed_size_field(unsigned char type)
 		case DW_EH_PE_udata4: return 4;
 		case DW_EH_PE_sdata8:
 		case DW_EH_PE_udata8: return 8;
-		case DW_EH_PE_absptr: return sizeof(void*);
+		case DW_EH_PE_absptr: return sizeof(size_t);
 	}
+	abort();
 }
 
 /** 
@@ -153,7 +154,7 @@ static inline int dwarf_size_of_fixed_size_field(unsigned char type)
  * This function is not intended to be called directly.  Use read_sleb128() or
  * read_uleb128() for reading signed and unsigned versions, respectively.
  */
-static uint64_t read_leb128(dw_eh_ptr_t *data, int *b)
+static uint64_t read_leb128(unsigned char** data, int *b)
 {
 	uint64_t uleb = 0;
 	unsigned int bit = 0;
@@ -235,7 +236,12 @@ static uint64_t read_value(char encoding, dw_eh_ptr_t *data)
 		READ(DW_EH_PE_sdata2, int16_t)
 		READ(DW_EH_PE_sdata4, int32_t)
 		READ(DW_EH_PE_sdata8, int64_t)
+#ifdef __CHERI_PURE_CAPABILITY__
+		READ(DW_EH_PE_absptr, int64_t)
+#else
 		READ(DW_EH_PE_absptr, intptr_t)
+#endif
+			break;
 #undef READ
 		// Read variable-length types
 		case DW_EH_PE_sleb128:
@@ -253,25 +259,31 @@ static uint64_t read_value(char encoding, dw_eh_ptr_t *data)
  *
  * If the encoding does not specify an indirect value, then this returns v.
  */
-static uint64_t resolve_indirect_value(_Unwind_Context *c,
-                                       unsigned char encoding,
-                                       int64_t v,
-                                       dw_eh_ptr_t start)
+static uintptr_t resolve_indirect_value(struct _Unwind_Context *c,
+                                        unsigned char encoding,
+                                        int64_t v,
+                                        dw_eh_ptr_t start)
 {
+	uintptr_t p;
 	switch (get_base(encoding))
 	{
 		case DW_EH_PE_pcrel:
-			v += reinterpret_cast<uint64_t>(start);
+			p = (uintptr_t)start + v;
 			break;
 		case DW_EH_PE_textrel:
-			v += static_cast<uint64_t>(static_cast<uintptr_t>(_Unwind_GetTextRelBase(c)));
+			p = _Unwind_GetTextRelBase(c) + v;
 			break;
 		case DW_EH_PE_datarel:
-			v += static_cast<uint64_t>(static_cast<uintptr_t>(_Unwind_GetDataRelBase(c)));
+			p = _Unwind_GetDataRelBase(c) + v;
 			break;
 		case DW_EH_PE_funcrel:
-			v += static_cast<uint64_t>(static_cast<uintptr_t>(_Unwind_GetRegionStart(c)));
+			p = _Unwind_GetRegionStart(c) + v;
 		default:
+#ifdef __CHERI_PURE_CAPABILITY__
+			p = (uintptr_t)__builtin_cheri_offset_set(__builtin_cheri_program_counter_get(), v);
+#else
+			p = v;
+#endif
 			break;
 	}
 	// If this is an indirect value, then it is really the address of the real
@@ -280,9 +292,9 @@ static uint64_t resolve_indirect_value(_Unwind_Context *c,
 	// be a GCC extensions, so not properly documented...
 	if (is_indirect(encoding))
 	{
-		v = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(*reinterpret_cast<void**>(v)));
+		p = *(uintptr_t*)p;
 	}
-	return v;
+	return p;
 }
 
 
@@ -291,7 +303,7 @@ static uint64_t resolve_indirect_value(_Unwind_Context *c,
  */
 static inline void read_value_with_encoding(_Unwind_Context *context,
                                             dw_eh_ptr_t *data,
-                                            uint64_t *out)
+                                            uintptr_t *out)
 {
 	dw_eh_ptr_t start = *data;
 	unsigned char encoding = *((*data)++);
@@ -339,15 +351,16 @@ static inline struct dwarf_eh_lsda parse_lsda(_Unwind_Context *context,
                                               unsigned char *data)
 {
 	struct dwarf_eh_lsda lsda;
+	void *lsda_addr = data;
 
 	lsda.region_start = reinterpret_cast<dw_eh_ptr_t>(_Unwind_GetRegionStart(context));
 
 	// If the landing pads are relative to anything other than the start of
 	// this region, find out where.  This is @LPStart in the spec, although the
 	// encoding that GCC uses does not quite match the spec.
-	uint64_t v = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(lsda.region_start));
+	uintptr_t v = reinterpret_cast<uintptr_t>(lsda.region_start);
 	read_value_with_encoding(context, &data, &v);
-	lsda.landing_pads = reinterpret_cast<dw_eh_ptr_t>(static_cast<uintptr_t>(v));
+	lsda.landing_pads = (dw_eh_ptr_t)v;
 
 	// If there is a type table, find out where it is.  This is @TTBase in the
 	// spec.  Note: we find whether there is a type table pointer by checking
@@ -439,7 +452,7 @@ static bool dwarf_eh_find_callsite(struct _Unwind_Context *context,
 		//
 		// The call stack contains address2 and not address1, address1 can be
 		// at the end of another EH region.
-		if (call_site_start < ip && ip <= call_site_start + call_site_size)
+		if (call_site_start <= ip && ip <= call_site_start + call_site_size)
 		{
 			if (action)
 			{
