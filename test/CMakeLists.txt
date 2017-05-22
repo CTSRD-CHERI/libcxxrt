@@ -17,9 +17,13 @@ if(NOT NO_SHARED)
                       DEPENDS system-test)
 endif()
 
-add_executable(cxxrt-test-static ${CXXTEST_SOURCES})
-set_property(TARGET cxxrt-test-static PROPERTY LINK_FLAGS "-nodefaultlibs -static")
-target_link_libraries(cxxrt-test-static cxxrt-static gcc_s pthread ${CMAKE_DL_LIBS} c compiler_rt)
+# It appears to be impossible to install libgcc_s.a on Ubuntu because they don't know how to package software
+# Let's add a cmake flag to allow disabling this test
+if(NOT NO_STATIC_TEST)
+    add_executable(cxxrt-test-static ${CXXTEST_SOURCES})
+    set_property(TARGET cxxrt-test-static PROPERTY LINK_FLAGS "-nodefaultlibs -static")
+    target_link_libraries(cxxrt-test-static cxxrt-static gcc_s pthread ${CMAKE_DL_LIBS} c compiler_rt)
+endif()
 
 if(NOT NO_SHARED)
     add_executable(cxxrt-test-shared ${CXXTEST_SOURCES})
@@ -34,12 +38,13 @@ if(NOT DISABLE_EXCEPTIONS_RTTI)
     target_link_libraries(cxxrt-test-foreign-exceptions cxxrt-static gcc_s pthread ${CMAKE_DL_LIBS} c)
 endif()
 
-add_test(cxxrt-test-static-test
-         ${CMAKE_CURRENT_SOURCE_DIR}/run_test.sh
-         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/cxxrt-test-static
-         ${CMAKE_CURRENT_BINARY_DIR}/expected_output.log
-         ${CMAKE_CURRENT_BINARY_DIR}/test-static-output.log)
-
+if(NOT NO_STATIC_TEST)
+    add_test(cxxrt-test-static-test
+            ${CMAKE_CURRENT_SOURCE_DIR}/run_test.sh
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/cxxrt-test-static
+            ${CMAKE_CURRENT_BINARY_DIR}/expected_output.log
+            ${CMAKE_CURRENT_BINARY_DIR}/test-static-output.log)
+endif()
 if(NOT NO_SHARED)
     add_test(cxxrt-test-shared-test
              ${CMAKE_CURRENT_SOURCE_DIR}/run_test.sh

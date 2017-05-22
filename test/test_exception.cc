@@ -218,7 +218,11 @@ struct uncaught_exceptions_checker
 	uncaught_exceptions_checker(int uncaught) : m_uncaught(uncaught) {}
 	~uncaught_exceptions_checker() {
 		char msg[128];
+#if __cplusplus > 201402L
 		int uncaught = std::uncaught_exceptions();
+#else
+		int uncaught = std::uncaught_exception() ? 1 : 0;
+#endif
 		snprintf(msg, sizeof msg, "%d uncaught exception%s in flight",
 		    uncaught, uncaught == 1 ? " is" : "s are");
 		TEST(uncaught == m_uncaught, msg);
