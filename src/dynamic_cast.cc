@@ -26,6 +26,7 @@
 
 #include "typeinfo.h"
 #include <stdio.h>
+#include <stdint.h>
 
 using namespace ABI_NAMESPACE;
 
@@ -35,10 +36,11 @@ using namespace ABI_NAMESPACE;
 struct vtable_header
 {
 	/** Offset of the leaf object. */
-	ptrdiff_t leaf_offset;
+	intptr_t leaf_offset;
 	/** Type of the object. */
 	const __class_type_info *type;
 };
+static_assert(sizeof(struct vtable_header) == 2*sizeof(void*), "header size is incorrect");
 
 /**
  * Simple macro that does pointer arithmetic in bytes but returns a value of
@@ -166,7 +168,7 @@ bool __vmi_class_type_info::__do_upcast(const __class_type_info *target,
 		if (info->isVirtual())
 		{
 			// Object's vtable
-			ptrdiff_t *off = *static_cast<ptrdiff_t**>(obj);
+			intptr_t *off = *static_cast<intptr_t**>(obj);
 			// Offset location in vtable
 			off = ADD_TO_PTR(off, offset);
 			offset = *off;
