@@ -76,7 +76,7 @@ typedef void (*terminate_handler)();
  */
 struct __cxa_exception
 {
-#if __LP64__
+#if __LP64__ || defined(__CHERI_PURE_CAPABILITY__)
 	/**
 	 * Reference count.  Used to support the C++11 exception_ptr class.  This
 	 * is prepended to the structure in 64-bit mode and squeezed in to the
@@ -87,7 +87,11 @@ struct __cxa_exception
 	 * than the end, because the public API for creating it returns the address
 	 * of the end (where the exception object can be stored).
 	 */
+#ifdef __CHERI_PURE_CAPABILITY__
+	uint64_t referenceCount;
+#else
 	uintptr_t referenceCount;
+#endif
 #endif
 	/** Type info for the thrown object. */
 	std::type_info *exceptionType;
@@ -147,7 +151,7 @@ struct __cxa_exception
 	 * need to adjust the thrown pointer to make it all work correctly.
 	 */
 	void *adjustedPtr;
-#if !__LP64__
+#if !__LP64__ && !defined(__CHERI_PURE_CAPABILITY__)
 	/**
 	 * Reference count.  Used to support the C++11 exception_ptr class.  This
 	 * is prepended to the structure in 64-bit mode and squeezed in to the
