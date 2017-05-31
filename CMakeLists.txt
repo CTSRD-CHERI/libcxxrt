@@ -33,7 +33,7 @@ endif()
 
 
 if (DISABLE_EXCEPTIONS_RTTI)
-  add_definitions(-DLIBCXXRT_NO_EXCEPTIONS_NO_RTTI)
+  add_definitions(-DLIBCXXRT_NO_EXCEPTIONS_NO_RTTI -fno-rtti -fno-exceptions)
 endif()
 
 enable_testing()
