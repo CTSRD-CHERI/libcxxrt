@@ -213,6 +213,8 @@ void test_uncaught_exception()
 	catch (...) {}
 }
 
+#ifdef HAVE_UNCAUGHT_EXCEPTIONS
+
 struct uncaught_exceptions_checker
 {
 	uncaught_exceptions_checker(int uncaught) : m_uncaught(uncaught) {}
@@ -272,6 +274,8 @@ void test_uncaught_exceptions()
 	catch (...) {}
 }
 
+#endif /* HAVE_UNCAUGHT_EXCEPTIONS */
+
 extern "C" void __cxa_bad_cast();
 
 void test_exceptions(void)
@@ -319,8 +323,9 @@ void test_exceptions(void)
 	}
 	test_const();
 	test_uncaught_exception();
+#ifdef HAVE_UNCAUGHT_EXCEPTIONS
 	test_uncaught_exceptions();
-
+#endif
 
 	//printf("Test: %s\n",
 }

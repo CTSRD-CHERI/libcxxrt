@@ -9,10 +9,13 @@ endif()
 
 include(CheckCXXSymbolExists)
 check_cxx_symbol_exists(std::uncaught_exceptions stdexcept HAVE_STD_UNCAUGHT_EXCEPTIONS)
+if(HAVE_STD_UNCAUGHT_EXCEPTIONS)
+    add_definitions(-DHAVE_STD_UNCAUGHT_EXCEPTIONS)
+endif()
 
 option(COMPARE_TEST_OUTPUT_TO_SYSTEM_OUTPUT "Compare tests with system output" ON)
 
-if(NOT NO_SHARED AND HAVE_STD_UNCAUGHT_EXCEPTIONS AND COMPARE_TEST_OUTPUT_TO_SYSTEM_OUTPUT)
+if(NOT NO_SHARED AND COMPARE_TEST_OUTPUT_TO_SYSTEM_OUTPUT)
     add_executable(system-test ${CXXTEST_SOURCES})
 
     # Generating excpected output with system-test
