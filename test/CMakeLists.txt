@@ -39,16 +39,17 @@ function(add_cxxrt_test _target _output_log_file)
     endif()
 endfunction()
 
-# It appears to be impossible to install libgcc_s.a on Ubuntu because they don't know how to package software
-# Let's add a cmake flag to allow disabling this test
-option(HAVE_STATIC_GCC_S "Whether the host system has a static libgcc_s.a" ON)
 option(NO_STATIC_TEST "Don't build the static test" OFF)
-if(HAVE_STATIC_GCC_S)
-  set(STATIC_LIB_DEPS gcc_s compiler_rt)
-else()
-  set(STATIC_LIB_DEPS gcc_eh)
+set(STATIC_LIB_DEPS gcc_eh)
+find_library(LIBCOMPILER_RT_STATIC libcompiler_rt.a)
+if(LIBCOMPILER_RT_STATIC)
+    list(APPEND STATIC_LIB_DEPS ${LIBCOMPILER_RT_STATIC})
 endif()
-
+find_library(LIBGCC_S_STATIC libgcc_s.a)
+if(LIBGCC_S_STATIC)
+    list(APPEND STATIC_LIB_DEPS ${LIBGCC_S_STATIC})
+endif()
+message(STATUS "static lib deps: ${STATIC_LIB_DEPS}")
 
 if(NOT NO_STATIC_TEST)
     add_executable(cxxrt-test-static ${CXXTEST_SOURCES})
