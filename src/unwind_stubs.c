@@ -18,9 +18,9 @@ uintptr_t _Unwind_GetRegionStart (struct _Unwind_Context *c) { return 0; }
 _Unwind_Reason_Code
 	  _Unwind_Resume_or_Rethrow (struct _Unwind_Exception *e) { return _URC_NO_REASON; }
 
-unsigned long _Unwind_GetDataRelBase (struct _Unwind_Context *c) { return 0; }
+uintptr_t _Unwind_GetDataRelBase (struct _Unwind_Context *c) { return 0; }
 
-unsigned long _Unwind_GetTextRelBase (struct _Unwind_Context *c) { return 0; }
+uintptr_t _Unwind_GetTextRelBase (struct _Unwind_Context *c) { return 0; }
 
 typedef _Unwind_Reason_Code (*_Unwind_Trace_Fn) (struct _Unwind_Context *,
 						 void *);
