@@ -28,6 +28,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  */
 
 /* For uint64_t */
 #include <stdint.h>
+// I dont know why my uint64_t is in here, but it is.
+#include "mips.h"
 
 #ifdef __cplusplus
 extern "C" {

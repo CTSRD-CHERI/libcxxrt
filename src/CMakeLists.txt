@@ -24,6 +24,7 @@ endif()
 add_definitions(-D_GNU_SOURCE)
 
 add_library(cxxrt-static STATIC ${CXXRT_SOURCES})
+target_compile_options(cxxrt-static PRIVATE "-Wno-unused-parameter")
 target_link_libraries(cxxrt-static PUBLIC ${CMAKE_DL_LIBS})
 target_compile_features(cxxrt-static PRIVATE cxx_static_assert)
 set_target_properties(cxxrt-static PROPERTIES OUTPUT_NAME "cxxrt")
