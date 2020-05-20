@@ -97,8 +97,6 @@ typedef struct {
 static const uint32_t LOCKED = static_cast<guard_lock_t>(1) << 31;
 static const uint32_t INITIALISED = 1;
 #	else
-// CheriOS's dylink.h specifies a guard_t which is pulled in from a whole bunch of places. Its not needed here, but I don't want to give it its own header and muck around with everything that currently uses dylink.h. Deal with the following:
-#define guard_t libcxx_guard_t
 typedef struct {
 	uint32_t init_half;
 	uint32_t lock_half;
